@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import os
+import ctypes
+import time
 
 from hand_tracking import HandTracker
 from game import Game
@@ -8,8 +10,12 @@ from ui import *
 from sound import play_music
 from story import story_data
 
-# Ẩn warning
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+# ===== FULL SCREEN =====
+user32 = ctypes.windll.user32
+SCREEN_W = user32.GetSystemMetrics(0)
+SCREEN_H = user32.GetSystemMetrics(1)
 
 # ===== LOAD IMAGE =====
 def load_img(path, size):
@@ -22,18 +28,20 @@ def load_img(path, size):
 # ===== BACKGROUND =====
 bg = cv2.imread("assets/bg.jpg")
 if bg is None:
-    print("⚠️ Không có bg.jpg → dùng nền mặc định")
-    bg = np.zeros((480,640,3), dtype="uint8")
+    bg = np.zeros((SCREEN_H, SCREEN_W, 3), dtype="uint8")
     bg[:] = (30,30,30)
 else:
-    bg = cv2.resize(bg,(640,480))
+    bg = cv2.resize(bg, (SCREEN_W, SCREEN_H))
 
 # ===== LOAD ITEM =====
-money_img = load_img("assets/money.png",(40,40))
-bomb_img  = load_img("assets/bomb.png",(40,40))
-star_img  = load_img("assets/star.png",(40,40))
-speed_img = load_img("assets/speed.png",(40,40))
-basket_img= load_img("assets/basket.png",(100,50))
+money_img  = load_img("assets/money.png",(60,60))
+bomb_img   = load_img("assets/bomb.png",(60,60))
+star_img   = load_img("assets/star.png",(60,60))
+speed_img  = load_img("assets/speed.png",(60,60))
+freeze_img = load_img("assets/freeze.png",(60,60))
+attack_img = load_img("assets/attack.png",(60,60))
+basket_img = load_img("assets/basket.png",(150,80))
+boss_img   = load_img("assets/boss.png",(200,150))
 
 # ===== DRAW PNG =====
 def draw_png(frame, img, x, y):
@@ -43,7 +51,7 @@ def draw_png(frame, img, x, y):
     x, y = int(x), int(y)
     h, w = img.shape[:2]
 
-    if x < 0 or y < 0 or x+w > 640 or y+h > 480:
+    if x < 0 or y < 0 or x+w > SCREEN_W or y+h > SCREEN_H:
         return
 
     if img.shape[2] == 4:
@@ -56,31 +64,21 @@ def draw_png(frame, img, x, y):
     else:
         frame[y:y+h, x:x+w] = img
 
-# ===== SCORE =====
-def load_score():
-    try:
-        return int(open("data.txt").read())
-    except:
-        return 0
-
-def save_score(score):
-    open("data.txt","w").write(str(score))
-
 # ===== INIT =====
 cap = cv2.VideoCapture(0)
 tracker = HandTracker()
-game = Game(640,480)
+game = Game(SCREEN_W, SCREEN_H)
 
+smooth_x = SCREEN_W // 2
+SMOOTHING = 0.2
+
+# ===== STATE =====
 state = "menu"
-highscore = load_score()
-
-# ===== STORY =====
 story_index = 0
 current_story = []
 
 play_music()
 
-# ===== MOUSE =====
 mouse_x,mouse_y = 0,0
 clicked = False
 
@@ -90,7 +88,8 @@ def mouse_event(event,x,y,flags,param):
     if event == cv2.EVENT_LBUTTONDOWN:
         clicked = True
 
-cv2.namedWindow("Money Game")
+cv2.namedWindow("Money Game", cv2.WINDOW_NORMAL)
+cv2.setWindowProperty("Money Game", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 cv2.setMouseCallback("Money Game",mouse_event)
 
 # ===== LOOP =====
@@ -104,31 +103,30 @@ while True:
         if clicked:
             btn = check_click(mouse_x,mouse_y)
 
-            if btn == "VO TAN":
+            if btn == "VÔ TẬN":
                 game.mode = "endless"
                 game.reset()
                 state = "play"
 
-            elif btn == "THEO MAN":
+            elif btn == "THEO MÀN":
                 game.mode = "level"
                 state = "level_select"
 
-            elif btn == "HUONG DAN":
+            elif btn == "HƯỚNG DẪN":
                 state = "guide"
 
             clicked = False
 
-    # ===== CHỌN MÀN =====
+    # ===== LEVEL SELECT =====
     elif state == "level_select":
         draw_level_select(frame)
 
         if clicked:
             btn = check_click(mouse_x,mouse_y)
 
-            if btn in ["MAN 1","MAN 2","MAN 3"]:
+            if btn in ["MÀN 1","MÀN 2","MÀN 3","MÀN 4"]:
                 game.level = int(btn[-1])
 
-                # 👉 load story trước khi chơi
                 current_story = story_data.get(game.level, [])
                 story_index = 0
                 state = "story"
@@ -142,74 +140,92 @@ while True:
             draw_story(frame, speaker, text, story_index, len(current_story))
 
             if clicked:
-                if check_click(mouse_x,mouse_y) == "TIEP":
+                if check_click(mouse_x,mouse_y) == "TIẾP":
                     story_index += 1
                 clicked = False
         else:
             game.reset()
             state = "play"
 
-    # ===== HƯỚNG DẪN =====
+    # ===== GUIDE =====
     elif state == "guide":
         draw_guide(frame)
 
         if clicked:
-            if check_click(mouse_x,mouse_y) == "QUAY LAI":
+            if check_click(mouse_x,mouse_y) == "QUAY LẠI":
                 state = "menu"
             clicked = False
 
-    # ===== GAME =====
+    # ===== PLAY =====
     elif state == "play":
         ret, cam = cap.read()
         if not ret:
-            print("❌ Không đọc được camera")
             break
 
         cam = cv2.flip(cam,1)
-
         x = tracker.get_x(cam)
+
         if x is not None:
-            if hasattr(game, "speed_boost") and game.speed_boost:
-                game.basket_x += (x - game.basket_x) * 0.5
-            else:
-                game.basket_x = x
+            cam_w = cam.shape[1]
+            x = int(x * SCREEN_W / cam_w)
+
+            smooth_x = int(smooth_x * (1 - SMOOTHING) + x * SMOOTHING)
+
+            speed = 0.3 if not game.speed_boost else 0.6
+            game.basket_x += (smooth_x - game.basket_x) * speed
+            game.basket_x = max(0, min(SCREEN_W, game.basket_x))
 
         game.update()
 
-        # ===== VẼ ITEM =====
+        # ITEM
         for item in game.items:
-            if item["type"] == "money":
-                draw_png(frame, money_img, item["x"], item["y"])
-            elif item["type"] == "bomb":
-                draw_png(frame, bomb_img, item["x"], item["y"])
-            elif item["type"] == "star":
-                draw_png(frame, star_img, item["x"], item["y"])
-            elif item["type"] == "speed":
-                draw_png(frame, speed_img, item["x"], item["y"])
+            draw_png(frame, {
+                "money": money_img,
+                "bomb": bomb_img,
+                "star": star_img,
+                "speed": speed_img,
+                "freeze": freeze_img,
+                "attack": attack_img
+            }[item["type"]], item["x"], item["y"])
 
-        # ===== VẼ GIỎ =====
-        draw_png(frame, basket_img, game.basket_x - 50, 420)
+        # ĐẠN
+        for p in game.projectiles:
+            cv2.circle(frame, (int(p["x"]), int(p["y"])), 8, (0,255,255), -1)
 
+        # BOSS
+        if game.boss_mode:
+            draw_png(frame, boss_img, game.boss_x - 100, 50)
+
+            bar_w = 300
+            x1 = SCREEN_W//2 - bar_w//2
+
+            cv2.rectangle(frame,(x1,20),(x1+bar_w,40),(80,80,80),-1)
+            cv2.rectangle(frame,(x1,20),
+                          (x1 + int(bar_w * game.boss_hp / 20),40),
+                          (0,0,255),-1)
+
+            for b in game.enemy_bullets:
+                cv2.circle(frame, (int(b["x"]), int(b["y"])), 10, (0,0,255), -1)
+
+        draw_png(frame, basket_img, game.basket_x - 75, SCREEN_H - 100)
         draw_game(frame, game)
 
         # ===== WIN =====
-        if game.mode == "level":
-            if game.is_win():
-                game.level += 1
+        if game.is_win():
+            game.level += 1
 
-                if game.level > 4:
-                    # 👉 ENDING STORY
-                    current_story = story_data.get("ending", [])
-                    story_index = 0
-                    state = "story_end"
-                else:
-                    # 👉 STORY MÀN TIẾP
-                    current_story = story_data.get(game.level, [])
-                    story_index = 0
-                    state = "story"
+            if game.level > 4:
+                current_story = story_data.get("ending", [])
+                story_index = 0
+                state = "story_end"
+            else:
+                current_story = story_data.get(game.level, [])
+                story_index = 0
+                state = "story"
 
-            elif game.get_time_left() <= 0:
-                state = "over"
+        # ===== LOSE =====
+        if game.is_dead() or game.is_time_up():
+            state = "over"
 
     # ===== ENDING =====
     elif state == "story_end":
@@ -218,25 +234,21 @@ while True:
             draw_story(frame, speaker, text, story_index, len(current_story))
 
             if clicked:
-                if check_click(mouse_x,mouse_y) == "TIEP":
+                if check_click(mouse_x,mouse_y) == "TIẾP":
                     story_index += 1
                 clicked = False
         else:
-            if game.score > highscore:
-                highscore = game.score
-                save_score(highscore)
             state = "menu"
 
     # ===== GAME OVER =====
     elif state == "over":
-        draw_gameover(frame, game.score, highscore)
+        draw_gameover(frame, game.score, 0)
 
         if clicked:
-            if check_click(mouse_x,mouse_y) == "CHOI LAI":
+            if check_click(mouse_x,mouse_y) == "CHƠI LẠI":
                 state = "menu"
             clicked = False
 
-    # ===== SHOW =====
     cv2.imshow("Money Game", frame)
 
     if cv2.waitKey(1) & 0xFF == 27:
