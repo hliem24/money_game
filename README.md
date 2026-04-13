@@ -119,12 +119,12 @@
 #### Bước 1: Chuẩn bị môi trường
 
 1. **Kiểm tra Python**: Mở terminal/command prompt và chạy:
-   ```bash
-   python --version
+
+  - python --version
 
 2. **Cài đặt thư viện**: Chạy lệnh cài đặt các gói cần thiết:
-  ```bash
-   pip install opencv-python numpy mediapipe
+
+  - pip install opencv-python numpy mediapipe
 
 #### Bước 2: Kiểm tra cấu trúc thư mục
 
