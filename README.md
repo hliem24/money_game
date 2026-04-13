@@ -123,7 +123,8 @@
    python --version
 
 2. **Cài đặt thư viện**: Chạy lệnh cài đặt các gói cần thiết:
-   - `pip install opencv-python numpy mediapipe`
+  ```bash
+   pip install opencv-python numpy mediapipe
 
 #### Bước 2: Kiểm tra cấu trúc thư mục
 
@@ -138,13 +139,14 @@ Tài nguyên: Thư mục assets/ (chứa ảnh .png và âm thanh).
 
 #### Bước 3: Chạy ứng dụng
 
-**Khởi động trò chơi:**
-```python main.py
+**Khởi động trò chơi:**:
+
+- python main.py
 
 - Trò chơi sẽ khởi động ở chế độ toàn màn hình
 - Webcam sẽ tự động kích hoạt để bắt đầu nhận diện cử chỉ.
 - Nhạc nền sẽ tự động phát khi vào Menu.
-*
+
 ### 🚀 Sử dụng ứng dụng
 
 1. **Kết nối**: Chỉ cần đưa bàn tay vào khung hình Webcam để hệ thống bắt đầu tracking (Hand Tracking).
