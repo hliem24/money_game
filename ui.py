@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 buttons = {}
 
 # ===== FONT =====
-FONT_PATH = "arial.ttf"   # 👉 đổi nếu bạn có font đẹp hơn
+FONT_PATH = "arial.ttf"
 
 def draw_text_vn(frame, text, x, y, size=30, color=(255,255,255)):
     img_pil = Image.fromarray(frame)
@@ -17,7 +17,6 @@ def draw_text_vn(frame, text, x, y, size=30, color=(255,255,255)):
         font = ImageFont.load_default()
 
     draw.text((x, y), text, font=font, fill=color)
-
     return np.array(img_pil)
 
 # ===== LOAD ICON =====
@@ -71,8 +70,17 @@ def draw_png(frame, img, x, y):
         frame[y:y+h, x:x+w] = img
 
 # ===== BUTTON =====
-def draw_button(frame, text, x, y, w, h):
-    cv2.rectangle(frame, (x,y), (x+w,y+h), (30,30,30), -1)
+def draw_button(frame, text, x, y, w, h, mouse_pos=None):
+    hover = False
+
+    if mouse_pos:
+        mx, my = mouse_pos
+        if x < mx < x+w and y < my < y+h:
+            hover = True
+
+    color = (80,80,80) if hover else (30,30,30)
+
+    cv2.rectangle(frame, (x,y), (x+w,y+h), color, -1)
     cv2.rectangle(frame, (x,y), (x+w,y+h), (255,255,255), 2)
 
     frame[:] = draw_text_vn(frame, text, x+20, y+15, 28)
@@ -86,30 +94,30 @@ def check_click(x,y):
     return None
 
 # ===== MENU =====
-def draw_menu(frame):
+def draw_menu(frame, mouse_pos=None):
     buttons.clear()
     h, w = frame.shape[:2]
 
     frame[:] = draw_text_vn(frame,"GAME HỨNG TIỀN", w//2 - 200,120,50,(0,255,255))
 
-    draw_button(frame,"VÔ TẬN",w//2 - 100,200,200,60)
-    draw_button(frame,"THEO MÀN",w//2 - 100,280,200,60)
-    draw_button(frame,"HƯỚNG DẪN",w//2 - 100,360,200,60)
+    draw_button(frame,"VÔ TẬN",w//2 - 100,200,200,60, mouse_pos)
+    draw_button(frame,"THEO MÀN",w//2 - 100,280,200,60, mouse_pos)
+    draw_button(frame,"HƯỚNG DẪN",w//2 - 100,360,200,60, mouse_pos)
 
 # ===== LEVEL =====
-def draw_level_select(frame):
+def draw_level_select(frame, mouse_pos=None):
     buttons.clear()
     h, w = frame.shape[:2]
 
     frame[:] = draw_text_vn(frame,"CHỌN MÀN", w//2 - 120,120,45,(0,255,0))
 
-    draw_button(frame,"MÀN 1",w//2 - 100,200,200,60)
-    draw_button(frame,"MÀN 2",w//2 - 100,280,200,60)
-    draw_button(frame,"MÀN 3",w//2 - 100,360,200,60)
-    draw_button(frame,"MÀN 4",w//2 - 100,440,200,60)
+    draw_button(frame,"MÀN 1",w//2 - 100,200,200,60, mouse_pos)
+    draw_button(frame,"MÀN 2",w//2 - 100,280,200,60, mouse_pos)
+    draw_button(frame,"MÀN 3",w//2 - 100,360,200,60, mouse_pos)
+    draw_button(frame,"MÀN 4",w//2 - 100,440,200,60, mouse_pos)
 
 # ===== GUIDE =====
-def draw_guide(frame):
+def draw_guide(frame, mouse_pos=None):
     buttons.clear()
     h, w = frame.shape[:2]
 
@@ -123,18 +131,16 @@ def draw_guide(frame):
         frame[:] = draw_text_vn(frame, text, w//2 - 140, y+10, 28)
         y += 60
 
-    row(basket_icon, "Di chuyển tay để điều khiển giỏ")
-    row(money_icon, "Tiền +1 điểm")
-    row(star_icon, "Sao +2 điểm")
+    row(basket_icon, "Di chuyển tay")
+    row(money_icon, "Tiền +1")
+    row(star_icon, "Sao +2")
     row(bomb_icon, "Bom -1 tim")
     row(speed_icon, "Tăng tốc")
-    row(freeze_icon, "Làm chậm")
-    row(attack_icon, "Bắn đạn")
 
-    draw_button(frame,"QUAY LẠI",w//2 - 100, h - 120,200,60)
+    draw_button(frame,"QUAY LẠI",w//2 - 100, h - 120,200,60, mouse_pos)
 
 # ===== STORY =====
-def draw_story(frame, speaker, text, index, total):
+def draw_story(frame, speaker, text, index, total, mouse_pos=None):
     buttons.clear()
     h, w = frame.shape[:2]
 
@@ -146,30 +152,14 @@ def draw_story(frame, speaker, text, index, total):
         draw_png(frame, avatar, w//2 - 300, 320)
 
     frame[:] = draw_text_vn(frame, speaker.upper(), w//2 - 120, 330, 25,(0,255,255))
-
-    # xuống dòng
-    words = text.split(" ")
-    lines = []
-    cur = ""
-    for w_word in words:
-        if len(cur + w_word) < 28:
-            cur += w_word + " "
-        else:
-            lines.append(cur)
-            cur = w_word + " "
-    lines.append(cur)
-
-    for i, line in enumerate(lines[:3]):
-        frame[:] = draw_text_vn(frame, line, w//2 - 120, 360 + i*30, 25)
+    frame[:] = draw_text_vn(frame, text, w//2 - 120, 370, 28)
 
     frame[:] = draw_text_vn(frame, f"{index+1}/{total}", w//2 + 230,470,20,(200,200,200))
 
-    draw_button(frame,"TIẾP",w//2 + 150,440,120,40)
+    draw_button(frame,"TIẾP",w//2 + 150,440,120,40, mouse_pos)
 
 # ===== GAME =====
 def draw_game(frame, game):
-    h, w = frame.shape[:2]
-
     frame[:] = draw_text_vn(frame,f"Điểm: {game.score}",20,20,30)
 
     for i in range(game.hp):
@@ -180,15 +170,28 @@ def draw_game(frame, game):
 
     frame[:] = draw_text_vn(frame,f"Màn: {game.level}",20,160,30,(0,255,0))
 
+    # ===== THÊM PHẦN NÀY =====
     if not game.boss_mode:
-        frame[:] = draw_text_vn(frame,f"Thời gian: {max(0, game.get_time_left())}",20,200,30,(0,0,255))
-        frame[:] = draw_text_vn(frame,f"Mục tiêu: {game.target}",20,240,30,(255,255,0))
+        frame[:] = draw_text_vn(
+            frame,
+            f"Thời gian: {max(0, game.get_time_left())}",
+            20,200,30,(0,0,255)
+        )
 
+        frame[:] = draw_text_vn(
+            frame,
+            f"Mục tiêu: {game.target}",
+            20,240,30,(255,255,0)
+        )
     else:
-        frame[:] = draw_text_vn(frame,"BOSS FIGHT!", w//2 - 120,60,35,(0,0,255))
+        frame[:] = draw_text_vn(
+            frame,
+            "BOSS FIGHT!",
+            500,60,35,(0,0,255)
+        )
 
 # ===== GAME OVER =====
-def draw_gameover(frame,score,highscore):
+def draw_gameover(frame,score,highscore, mouse_pos=None):
     buttons.clear()
     h, w = frame.shape[:2]
 
@@ -196,4 +199,4 @@ def draw_gameover(frame,score,highscore):
     frame[:] = draw_text_vn(frame,f"Điểm: {score}", w//2 - 100,240,35)
     frame[:] = draw_text_vn(frame,f"Điểm cao: {highscore}", w//2 - 130,280,30,(0,255,255))
 
-    draw_button(frame,"CHƠI LẠI",w//2 - 100,330,200,60)
+    draw_button(frame,"CHƠI LẠI",w//2 - 100,330,200,60, mouse_pos)

@@ -4,7 +4,7 @@
     </a>
 </h2>
 <h2 align="center">
-   ỨNG DỤNG TRẮC NHIỆM TRỰC TUYẾN 
+   Money Game - Hand Tracking Project 
 </h2>
 <div align="center">
     <p align="center">
@@ -19,53 +19,53 @@
 
 </div>
 
-## 📖 1. Giới thiệu hệ thống
-Ứng dụng **trắc nghiệm Client–Server** sử dụng **TCP** cho phép nhiều người dùng làm bài trắc nghiệm qua mạng theo thời gian thực.
+## 📝 1. Giới thiệu hệ thống
 
-- **Server**: trung tâm xác thực tài khoản, cung cấp danh mục bộ đề, phát câu hỏi, chấm điểm và lưu kết quả.
-- **Client (Java Swing)**: giao diện để **đăng ký/đăng nhập**, **chọn bộ đề**, **làm bài** (đồng hồ đếm ngược, thanh tiến độ, điều hướng Trước/Tiếp/Nộp), xem **tổng kết** và **lịch sử**.
-- **Lưu trữ dạng tệp** (không dùng DB) để triển khai đơn giản:
-  - `users.csv`: tài khoản (username, password_hash SHA-256, created_at).
-  - `questions/<type>/<set>.csv` + `<set>.cfg`: ngân hàng câu hỏi & thời lượng đề.
-  - `results.csv`: lịch sử kết quả thi (điểm, thời gian, bộ đề, IP…).
+Ứng dụng **Money Game** sử dụng công nghệ nhận diện bàn tay thời gian thực, cho phép người chơi tương tác với thế giới ảo mà không cần chuột hay bàn phím.
 
-**Các chức năng chính:**
-1) **Kết nối & xác thực**: Client kết nối Server qua IP/port (mặc định **5555**). Hỗ trợ nhiều Client đồng thời (đa luồng). Pha AUTH với 2 chế độ: `LOGIN` / `REGISTER` (mật khẩu băm SHA-256 trước khi gửi).
-2) **Chọn bộ đề**: Server gửi **catalog** (Loại → Bộ đề). Client chọn loại/bộ đề qua hộp thoại “card style”.
-3) **Phát câu hỏi & làm bài**: Server gửi lần lượt đối tượng `Question`. Client chọn đáp án **0..3** (A..D) rồi gửi về; Server trả kết quả **đúng/sai** theo thời gian thực. Thời lượng **đếm ngược toàn bài** lấy từ tệp `.cfg` (ví dụ `seconds=600`).
-4) **Nộp bài / Hết giờ**: Người dùng có thể nộp sớm; hết giờ hệ thống tự nộp phần còn lại. Server trả `RESULT|username|correct/total` và ghi một dòng vào `results.csv`.
-5) **Xem kết quả**: Client có trình xem `results.csv` (bảng lịch sử), giao diện đồng nhất với ứng dụng.
+- **Cơ chế**: Sử dụng Webcam để bắt tọa độ bàn tay, điều khiển giỏ hứng vật phẩm rơi từ trên màn hình.
+- **Chế độ chơi**: 
+    - **Vô tận (Endless)**: Thử thách khả năng phản xạ với độ khó tăng dần.
+    - **Theo màn (Level)**: Hệ thống 4 màn chơi với độ khó khác nhau và cốt truyện dẫn dắt.
+- **Tính năng đặc biệt**: 
+    - **Boss Mode**: Xuất hiện ở các màn cao, yêu cầu người chơi vừa hứng vật phẩm vừa tấn công Boss và né đạn.
+    - **Hệ thống Item**: Đa dạng từ vật phẩm tăng điểm, hồi máu đến các hiệu ứng hỗ trợ như đóng băng thời gian, tăng tốc độ.
 
----
+## 🛠 2. Công nghệ sử dụng
 
-## 🔧 2. Công nghệ sử dụng
+- **Ngôn ngữ**: Python 3.9+
+- **Thư viện chính**:
+    - **OpenCV**: Xử lý luồng video và đồ họa 2D.
+    - **MediaPipe**: Thư viện AI hỗ trợ nhận diện 21 điểm mốc (landmarks) trên bàn tay.
+    - **NumPy**: Tính toán ma trận hình ảnh và xử lý hiệu ứng.
+    - **ctypes**: Tối ưu giao diện theo độ phân giải màn hình thực tế.
 
-#### Java Core & Multithreading
-#### Java Swing
-#### Java Sockets
-#### Hỗ trợ
-- `MessageDigest` (SHA-256) để băm mật khẩu phía Client trước khi gửi.
-- `SimpleDateFormat`/`LocalDateTime` để đóng dấu thời gian.
-- `Collections`/`ArrayList` quản lý danh mục bộ đề, lịch sử câu hỏi/đáp án phía Client.
+## 📂 3. Cấu trúc thư mục
 
+- `main.py`: Tệp thực thi chính, quản lý vòng lặp và trạng thái trò chơi.
+- `hand_tracking.py`: Xử lý logic AI nhận diện bàn tay từ Webcam.
+- `game.py`: Chứa logic lõi (tính điểm, va chạm, quản lý vật phẩm).
+- `ui.py`: Định nghĩa giao diện người dùng (nút bấm, thanh máu, bảng điểm).
+- `story.py`: Chứa dữ liệu kịch bản và lời thoại nhân vật.
+- `assets/`: Thư mục chứa tài nguyên ảnh (.png) và âm thanh.
 */
 
 
-## 🚀 3. Hình ảnh các chức năng
+## 🚀 4. Hình ảnh các chức năng
 
 <p align="center">
   <img src="docs/project photo/1..png" alt="Ảnh 1" width="800"/>
 </p>
 
 <p align="center">
-  <em>Giao diện khi vào ứng dụng  </em>
+  <em>Các mode trong GAME  </em>
 </p>
 
 <p align="center">
   <img src="docs/project photo/2..png" alt="Ảnh 2" width="700"/>
 </p>
 <p align="center">
-  <em>Client đăng nhập </em>
+  <em>Client hướng dẫn  </em>
 </p>
 
 
@@ -74,122 +74,91 @@
  
 </p>
 <p align="center">
-  <em> Client đăng ký </em>
+  <em> Client chơi màn  </em>
 </p>
 
 <p align="center">
     <img src="docs/project photo/4..png" alt="Ảnh 4" width="450"/>
 </p>
 <p align="center">
-  <em> Giao diện sau khi đăng nhập </em>
+  <em> Giao diện khi vào chơi  </em>
 </p>
 <p align="center">
-    <img src="docs/project photo/5...png" alt="Ảnh 4" width="450"/>
+    <img src="docs/project photo/5...png" alt="Ảnh 5" width="450"/>
 </p>
 <p align="center">
-  <em> Client lịch sử làm bài  </em>
+  <em> Màn khi mình thua   </em>
 </p>
 <p align="center">
-    <img src="docs/project photo/6..png" alt="Ảnh 4" width="450"/>
+    <img src="docs/project photo/6..png" alt="Ảnh 6" width="450"/>
 </p>
 <p align="center">
-  <em> Client chọn bộ đề   </em>
+  <em> Client thoại nhân vật    </em>
 </p>
 <p align="center">
-    <img src="docs/project photo/7..png" alt="Ảnh 4" width="450"/>
+    <img src="docs/project photo/7..png" alt="Ảnh 7" width="450"/>
 </p>
 <p align="center">
-  <em> Giao diện khi bắt đầu làm   </em>
+  <em> Giao diện màn đánh BOSS   </em>
 </p>
-<p align="center">
-    <img src="docs/project photo/8..png" alt="Ảnh 4" width="450"/>
-</p>
-<p align="center">
-  <em> Giao diện khi hoàn thành xong bài   </em>
-</p>
+
 
 ## 📝 4. Hướng dẫn cài đặt và sử dụng
 
 ### 🔧 Yêu cầu hệ thống
 
-- **Java Development Kit (JDK)**: Phiên bản 8 trở lên
-- **Hệ điều hành**: Windows, macOS, hoặc Linux
-- **Môi trường phát triển**: IDE (IntelliJ IDEA, Eclipse, VS Code) hoặc terminal/command prompt
-- **Bộ nhớ**: Tối thiểu 512MB RAM
-- **Dung lượng**: Khoảng 10MB cho mã nguồn và file thực thi
-- **Mạng**: Yêu cầu kết nối mạng nội bộ hoặc Internet để client và server giao tiếp qua TCP
+- **Python**: Phiên bản 3.9 trở lên
+- **Hệ điều hành**: Windows 10/11 (khuyên dùng), macOS, hoặc Linux
+- **Môi trường phát triển**: IDE (VS Code, PyCharm) hoặc terminal/command prompt
+- **Bộ nhớ**: Tối thiểu 4GB RAM
+- **Phần cứng**: Webcam hoạt động tốt (để nhận diện bàn tay)
+- **Mạng**: Không yêu cầu (chơi Offline)
 
 ### 📦 Cài đặt và triển khai
 
 #### Bước 1: Chuẩn bị môi trường
 
-1. **Kiểm tra Java**: Mở terminal/command prompt và chạy:
-
+1. **Kiểm tra Python**: Mở terminal/command prompt và chạy:
    ```bash
-   java -version
-   javac -version
-   ```
-   Đảm bảo cả hai lệnh đều hiển thị phiên bản Java 8 trở lên.
+   python --version
 
-2. **Tải mã nguồn**: Sao chép thư mục `UngDungTracNghiem_TCP` chứa các file:
-   - `QuizServer.java`
-   - `QuizClientSwing.java`
-   - `Question.java`
-   - `ResultsViewerSwing.java`
+2. **Cài đặt thư viện**: Chạy lệnh cài đặt các gói cần thiết:
+   - `pip install opencv-python numpy mediapipe`
 
-#### Bước 2: Biên dịch mã nguồn
+#### Bước 2: Kiểm tra cấu trúc thư mục
 
-1. **Mở terminal** và điều hướng đến thư mục chứa mã nguồn
-2. **Biên dịch các file Java**:
+Đảm bảo các tệp tin được đặt đúng vị trí (như ảnh cấu trúc thư mục):
 
-   ```bash
-   javac quiz/*.java
-   ```
-   Hoặc biên dịch từng file riêng lẻ:
-   ```bash
-    javac quiz/QuizServer.java
-    javac quiz/QuizClientSwing.java
-    javac quiz/Question.java
-    javac quiz/ResultsViewerSwing.java
-   ```
+Các file logic: main.py, game.py, hand_tracking.py, ui.py, sound.py, story.py.
 
+Dữ liệu AI: hand_landmarker.task.
+
+Tài nguyên: Thư mục assets/ (chứa ảnh .png và âm thanh).
 3. **Kiểm tra kết quả**: Nếu biên dịch thành công, sẽ tạo ra các file `.class` tương ứng.
 
 #### Bước 3: Chạy ứng dụng
 
-**Khởi động Server:**
-```bash
-java QuizServer.java
-```
-- Server sẽ khởi động trên port mặc định (5555)
-- Console sẽ hiển thị log khi có client kết nối.
-- Server sẽ tạo (nếu chưa có) file results.csv để lưu kết quả làm bài.
+**Khởi động trò chơi:**
+```python main.py
 
-**Khởi động Client:**
-```bash
-java QuizClientSwing.java
-```
-- Mỗi client được mở trong một terminal/ứng dụng riêng.
-- Nhập Host, Port và Username trên giao diện Swing.
-- Client kết nối đến server và bắt đầu nhận câu hỏi trắc nghiệm.
-- Sau khi hoàn thành, điểm số và kết quả sẽ được hiển thị ngay trên giao diện.
-- Người dùng có thể chọn 📄 Xem kết quả để mở bảng thống kê kết quả từ file results.csv.
-
+- Trò chơi sẽ khởi động ở chế độ toàn màn hình
+- Webcam sẽ tự động kích hoạt để bắt đầu nhận diện cử chỉ.
+- Nhạc nền sẽ tự động phát khi vào Menu.
+*
 ### 🚀 Sử dụng ứng dụng
 
-1. **Kết nối**: Nhập Host, Port và Tên người dùng → bấm Kết nối để tham gia thi.
-2. **Làm bài**: Chọn đáp án cho từng câu hỏi và nhấn Next/Finish.
-3. **Phản hồi**: Sau mỗi câu, giao diện hiển thị kết quả đúng/sai và tiến độ.
-4. **Kết quả cuối cùng**: Khi hoàn thành, client hiển thị điểm số và thống kê.
-5. **Lưu trữ**: Server tự động lưu kết quả vào file results.csv.
-6. **Xem lại**: Người dùng có thể nhấn 📄 Xem kết quả để mở bảng thống kê từ file.
-7. **Ngắt kết nối**: Đóng cửa sổ client hoặc mất mạng sẽ tự động ngắt kết nối.
+1. **Kết nối**: Chỉ cần đưa bàn tay vào khung hình Webcam để hệ thống bắt đầu tracking (Hand Tracking).
+2. **Chơi game**: Di chuyển tay sang trái/phải để điều khiển chiếc giỏ hứng vật phẩm , Hứng Tiền, Sao để tích lũy điểm; né tránh Bom để không bị mất máu (HP).
+3. **Vật phẩm hỗ trợ**: Hứng các Item như Tăng tốc, Đóng băng thời gian để có lợi thế.
+4. **Chiến đấu**: Trong màn Boss, hứng các vật phẩm Tấn công để gây sát thương lên Boss.
+5. **Cốt truyện**:Nhấn nút TIẾP trên màn hình để theo dõi lời thoại và diễn biến câu chuyện giữa các màn.
+6. **Thoát**: Nhấn phím Esc để đóng ứng dụng ngay lập tức.
 
 ## 👜Thông tin cá nhân
 **Họ tên**: Nguyễn Hoàng Liêm.  
 **Lớp**: CNTT 16-03.  
 **Email**: liemnguyenhoang22@gmail.com.
 
-© 2025 AIoTLab, Faculty of Information Technology, DaiNam University. All rights reserved.
+© 2026 AIoTLab, Faculty of Information Technology, DaiNam University. All rights reserved.
 
 ---

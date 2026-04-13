@@ -25,13 +25,23 @@ def load_img(path, size):
         return None
     return cv2.resize(img, size)
 
-# ===== BACKGROUND =====
-bg = cv2.imread("assets/bg.jpg")
-if bg is None:
-    bg = np.zeros((SCREEN_H, SCREEN_W, 3), dtype="uint8")
-    bg[:] = (30,30,30)
-else:
-    bg = cv2.resize(bg, (SCREEN_W, SCREEN_H))
+# ===== BACKGROUND THEO MÀN =====
+def load_bg(path):
+    img = cv2.imread(path)
+    if img is None:
+        print(f"⚠️ Không load được bg: {path}")
+        img = np.zeros((SCREEN_H, SCREEN_W, 3), dtype="uint8")
+        img[:] = (30,30,30)
+    return cv2.resize(img, (SCREEN_W, SCREEN_H))
+
+bg_list = {
+    1: load_bg("assets/bg1.png"),
+    2: load_bg("assets/bg2.png"),
+    3: load_bg("assets/bg3.png"),
+    4: load_bg("assets/bg4.png"),
+}
+
+bg_menu = load_bg("assets/bg_menu.png")
 
 # ===== LOAD ITEM =====
 money_img  = load_img("assets/money.png",(60,60))
@@ -94,11 +104,16 @@ cv2.setMouseCallback("Money Game",mouse_event)
 
 # ===== LOOP =====
 while True:
-    frame = bg.copy()
+
+    # ===== CHỌN BACKGROUND =====
+    if state == "menu":
+        frame = bg_menu.copy()
+    else:
+        frame = bg_list.get(game.level, bg_list[1]).copy()
 
     # ===== MENU =====
     if state == "menu":
-        draw_menu(frame)
+        draw_menu(frame, (mouse_x, mouse_y))
 
         if clicked:
             btn = check_click(mouse_x,mouse_y)
@@ -119,7 +134,7 @@ while True:
 
     # ===== LEVEL SELECT =====
     elif state == "level_select":
-        draw_level_select(frame)
+        draw_level_select(frame, (mouse_x, mouse_y))
 
         if clicked:
             btn = check_click(mouse_x,mouse_y)
@@ -149,7 +164,7 @@ while True:
 
     # ===== GUIDE =====
     elif state == "guide":
-        draw_guide(frame)
+        draw_guide(frame, (mouse_x, mouse_y))
 
         if clicked:
             if check_click(mouse_x,mouse_y) == "QUAY LẠI":
@@ -177,7 +192,7 @@ while True:
 
         game.update()
 
-        # ITEM
+        # ===== ITEM =====
         for item in game.items:
             draw_png(frame, {
                 "money": money_img,
@@ -188,12 +203,15 @@ while True:
                 "attack": attack_img
             }[item["type"]], item["x"], item["y"])
 
-        # ĐẠN
+        # ===== ĐẠN =====
         for p in game.projectiles:
             cv2.circle(frame, (int(p["x"]), int(p["y"])), 8, (0,255,255), -1)
 
-        # BOSS
+        # ===== BOSS =====
         if game.boss_mode:
+            # làm tối nền
+            frame = (frame * 0.5).astype(np.uint8)
+
             draw_png(frame, boss_img, game.boss_x - 100, 50)
 
             bar_w = 300
@@ -242,7 +260,7 @@ while True:
 
     # ===== GAME OVER =====
     elif state == "over":
-        draw_gameover(frame, game.score, 0)
+        draw_gameover(frame, game.score, 0, (mouse_x, mouse_y))
 
         if clicked:
             if check_click(mouse_x,mouse_y) == "CHƠI LẠI":
